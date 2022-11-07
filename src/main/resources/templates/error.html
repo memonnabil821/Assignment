@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Error Page</title>
+</head>
+<body>
+<div class="container">
+    <div class="mt-5 d-flex flex-row">
+        <h1>Some error caused the application to crash.</h1>
+        <form class="px-5 mt-2" th:action="@{/dashboard}" method="get">
+            <input class="btn btn-warning" type="submit" value="Go to Dashboard Page"/>
+        </form>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SearchController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Assignment</a> &gt; <a href="index.source.html" class="el_package">com.assignment.search.controller</a> &gt; <span class="el_source">SearchController.java</span></div><h1>SearchController.java</h1><pre class="source lang-java linenums">package com.assignment.search.controller;
+
+import com.assignment.search.model.Request;
+import com.assignment.search.service.SearchServiceImpl;
+import com.assignment.search.util.InputValidatorImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import java.text.ParseException;
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * Rest Controller for search functionality
+ */
+@RestController
+<span class="fc" id="L27">public class SearchController {</span>
+
+<span class="fc" id="L29">    private static final Logger LOGGER = LoggerFactory.getLogger(SearchController.class);</span>
+
+    @Autowired
+    private SearchServiceImpl searchServiceImpl;
+
+    /**
+     * Endpoint for exposing search functionality
+     * @param requestVO
+     * @param bindingResult
+     * @param user
+     * @param response
+     * @return
+     * @throws ParseException
+     */
+    @PostMapping(&quot;/search&quot;)
+    public List getSearchResult(@Valid @RequestBody Request requestVO, BindingResult bindingResult,
+                                @AuthenticationPrincipal User user, HttpServletResponse response) throws ParseException {
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        if(bindingResult.hasErrors()){</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">            if(bindingResult.hasFieldErrors(&quot;accountId&quot;)){</span>
+<span class="fc" id="L48">                LOGGER.error(&quot;Account id is not present in request&quot;);</span>
+<span class="fc" id="L49">                return Arrays.asList(&quot;Account Id should be present in the request&quot;);</span>
+            }
+<span class="fc" id="L51">            LOGGER.error(&quot;request is not correctly formed&quot;);</span>
+<span class="fc" id="L52">            return Arrays.asList(&quot;Incorrect input. Please check the input. Date should be in DD.MM.YYYY format only&quot;);</span>
+        }
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        if(InputValidatorImpl.validateUser(user, requestVO)){</span>
+<span class="fc" id="L55">            response.setStatus(401);</span>
+<span class="fc" id="L56">            LOGGER.error(&quot;User role is sending parameters&quot;);</span>
+<span class="fc" id="L57">            return Arrays.asList(&quot;User is not allowed to send parameters&quot;);</span>
+        }
+
+<span class="fc" id="L60">        return this.searchServiceImpl.search(requestVO);</span>
+    }
+
+    @GetMapping(&quot;/ping&quot;)
+    public String ping(){
+<span class="fc" id="L65">        return &quot;SUCCESS&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

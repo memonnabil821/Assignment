@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FilterListImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Assignment</a> &gt; <a href="index.source.html" class="el_package">com.assignment.search.service</a> &gt; <span class="el_source">FilterListImpl.java</span></div><h1>FilterListImpl.java</h1><pre class="source lang-java linenums">package com.assignment.search.service;
+
+import com.assignment.search.model.Request;
+import com.assignment.search.model.Statement;
+import org.springframework.stereotype.Service;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Service class to filter the result
+ */
+@Service
+<span class="fc" id="L16">public class FilterListImpl implements FilterList{</span>
+
+    /**
+     * Method to filter the result by amount.
+     * @param accountList
+     * @param fromAmount
+     * @param toAmount
+     * @return List&lt;Statement&gt;
+     */
+    @Override
+    public List&lt;Statement&gt; filterByAmount(List&lt;Statement&gt; accountList, String fromAmount, String toAmount) {
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">        return accountList.stream().filter(s -&gt; (Float.parseFloat(fromAmount) &lt;= Float.parseFloat(s.getAmount()))</span>
+<span class="pc bpc" id="L28" title="1 of 2 branches missed.">                &amp;&amp; (Float.parseFloat(s.getAmount()) &lt;= Float.parseFloat(toAmount))).collect(Collectors.toList());</span>
+    }
+
+    /**
+     * Method to filter the result by date.
+     * @param accountList
+     * @param fromDate
+     * @param toDate
+     * @return List&lt;Statement&gt;
+     * @throws ParseException
+     */
+    @Override
+    public List&lt;Statement&gt; filterByDate(List&lt;Statement&gt; accountList, String fromDate, String toDate) throws ParseException {
+<span class="fc" id="L41">        SimpleDateFormat formatter = new SimpleDateFormat(&quot;dd.MM.yyyy&quot;);</span>
+<span class="fc" id="L42">        return accountList.stream().filter(s -&gt; {</span>
+            try {
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">                return !(formatter.parse(s.getDateField()).before(formatter.parse(fromDate))</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">                        || formatter.parse(s.getDateField()).after(formatter.parse(toDate)));</span>
+<span class="nc" id="L46">            } catch (ParseException e) {</span>
+<span class="nc" id="L47">                throw new RuntimeException(e);</span>
+            }
+<span class="fc" id="L49">        }).collect(Collectors.toList());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

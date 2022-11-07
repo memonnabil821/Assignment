@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <title>Dashboard</title>
+<!--    <meta name="_csrf" th:content="${_csrf.token}" />-->
+<!--    <meta name="_csrf_header" th:content="${_csrf.headerName}" />-->
+    <link href="webjars/bootstrap/5.2.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="webjars/bootstrap/5.2.2/js/bootstrap.min.js"></script>
+    <script src="webjars/jquery/3.6.1/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="mt-5 d-flex flex-row">
+        <h1>Welcome to Dashboard</h1>
+        <form class="px-5 mt-2" th:action="@{/logout}" method="post">
+            <input class="btn btn-warning" type="submit" value="Sign Out"/>
+        </form>
+    </div>
+    <table id="accountsTable" class="table table-bordered mt-3">
+        <caption class="text-center">List of Accounts</caption>
+        <thead class="thead-dark">
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Account Type</th>
+            <th scope="col">Account Number (Hashed)</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+
+    <div class="mt-5 d-flex flex-row">
+        <form class="px-5 mt-2" method="post">
+            <input id="accountId" type="number" placeholder="Account ID" />
+            <input sec:authorize="hasRole('ADMIN')" id="fromAmount" type="text" placeholder="From Amount" />
+            <input sec:authorize="hasRole('ADMIN')" id="toAmount" type="text" placeholder="To Amount" />
+            <input sec:authorize="hasRole('ADMIN')" id="fromDate" type="date" name="From Date" />
+            <input sec:authorize="hasRole('ADMIN')" id="toDate" type="date" name="To Date" />
+            <input id="submitSearch" class="mx-5 btn btn-warning" value="Search"/>
+        </form>
+    </div>
+    <div id="errorDiv" class="bg-danger py-2">
+        <span class="text-center text-white mx-3"></span>
+    </div>
+    <table id="searchTable" class="table table-bordered mt-3">
+        <caption class="text-center">Account Statement</caption>
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Account Id</th>
+                <th scope="col">Date</th>
+                <th scope="col">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+</div>
+<script>
+$().ready(function(){
+    $("#accountsTable").hide();
+    $("#searchTable").hide();
+    $("#errorDiv").hide();
+    $.ajax({
+        url: "http://localhost:8080/accounts",
+        type: 'GET',
+        dataType: 'json',
+        success: function(data){
+            console.log(data);
+           var table = $("#accountsTable tbody");
+           $.each(data, function(i,ele){
+           table.append("<tr><td>"+ele.id+"</td><td>"+ele.accountType+"</td><td>"+ele.accountNumber+"</td></tr>");
+           });
+           $("#accountsTable").show();
+        },
+        error: function(err){
+            alert("Error in Accounts table Ajax call");
+        }
+    });
+
+    function dateFormat(input){
+        var dateParts = input.match(/\d+/g);
+        return dateParts[2]+"."+dateParts[1]+"."+dateParts[0];
+    }
+
+    $("#submitSearch").click(function(){
+        $("#searchTable").hide();
+        $("#errorDiv").hide();
+        var dataRequest = {
+                accountId: $("#accountId").val(),
+                fromAmount: $("#fromAmount").length==0?null:($("#fromAmount").val()==""?null:$("#fromAmount").val()),
+                toAmount: $("#toAmount").length==0?null:($("#toAmount").val()==""?null:$("#toAmount").val()),
+                fromDate: $("#fromDate").length==0?null:($("#fromDate").val()==""?null:dateFormat($("#fromDate").val())),
+                toDate: $("#toDate").length==0?null:($("#toDate").val()==""?null:dateFormat($("#toDate").val()))
+            };
+        $.ajax({
+            url: "http://localhost:8080/search",
+            type: 'POST',
+            dataType: 'json',
+            async: false,
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(dataRequest),
+            success: function(data){
+                console.log(data);
+                if(typeof data[0] === 'string'){
+                    $("#errorDiv span").html(data[0]);
+                    $("#errorDiv").show();
+                } else {
+                let html = '';
+                var table = $("#searchTable tbody");
+                 $.each(data, function(i, ele){
+                    html+="<tr><td>"+ele.accountId+"</td><td>"+ele.dateField+"</td><td>"+ele.amount+"</td></tr>";
+
+                 });
+                 table.html(html)
+                 $("#searchTable").show();
+                }
+            },
+            error: function(err){
+                if(err.status == 401){
+                    $("#errorDiv span").html("This user is not allowed to send any parameters");
+                    $("#errorDiv").show();
+                } else{
+                    alert("Error in Search Ajax call");
+                }
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>

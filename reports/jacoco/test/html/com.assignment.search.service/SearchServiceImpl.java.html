@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SearchServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Assignment</a> &gt; <a href="index.source.html" class="el_package">com.assignment.search.service</a> &gt; <span class="el_source">SearchServiceImpl.java</span></div><h1>SearchServiceImpl.java</h1><pre class="source lang-java linenums">package com.assignment.search.service;
+
+import com.assignment.search.model.Request;
+import com.assignment.search.model.Statement;
+import com.assignment.search.repository.SearchRepositoryImpl;
+import com.assignment.search.util.InputValidatorImpl;
+import com.assignment.search.util.SearchConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * Service class for all business logic
+ */
+@Service
+<span class="fc" id="L23">public class SearchServiceImpl implements SearchService{</span>
+
+<span class="fc" id="L25">    private static final Logger LOGGER = LoggerFactory.getLogger(SearchServiceImpl.class);</span>
+
+    @Autowired
+    private SearchRepositoryImpl searchRepository;
+
+    @Autowired
+    private FilterListImpl filterList;
+
+    /**
+     * Main service class method to perform logic.
+     * @param requestVO
+     * @return List
+     */
+    @Override
+    public List search(Request requestVO) {
+<span class="fc" id="L40">        LOGGER.debug(&quot;Search service is called&quot;);</span>
+        List&lt;Statement&gt; statementList;
+<span class="fc" id="L42">        List&lt;String&gt; criteriaList = InputValidatorImpl.validateInput(requestVO);</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">        if(criteriaList.contains(SearchConstants.AMOUNT_ERROR)){</span>
+<span class="fc" id="L44">            return Arrays.asList(SearchConstants.AMOUNT_ERROR);</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">        } else if(criteriaList.contains(SearchConstants.DATE_ERROR)){</span>
+<span class="fc" id="L46">            return Arrays.asList(SearchConstants.DATE_ERROR);</span>
+        }
+        try {
+<span class="fc" id="L49">            statementList = this.searchRepository.searchInDB(this.generateQuery(requestVO));</span>
+<span class="fc" id="L50">        } catch (Exception e) {</span>
+<span class="fc" id="L51">            LOGGER.error(&quot;Error in getting data from DB: &quot;, e);</span>
+<span class="fc" id="L52">            throw new RuntimeException(&quot;Error in getting data from DB&quot;);</span>
+<span class="fc" id="L53">        }</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        if(criteriaList.contains(SearchConstants.NO_CRITERIA)){</span>
+<span class="fc" id="L55">            requestVO.setToDate(LocalDate.now().format(DateTimeFormatter.ofPattern(SearchConstants.DD_MM_YYYY)).toString());</span>
+<span class="fc" id="L56">            requestVO.setFromDate(LocalDate.now().minusMonths(3).format(DateTimeFormatter.ofPattern(SearchConstants.DD_MM_YYYY)).toString());</span>
+            try {
+<span class="fc" id="L58">                statementList = this.filterList.filterByDate(statementList, LocalDate.now().minusMonths(3).format(DateTimeFormatter.ofPattern(SearchConstants.DD_MM_YYYY)).toString(),</span>
+<span class="fc" id="L59">                        LocalDate.now().format(DateTimeFormatter.ofPattern(SearchConstants.DD_MM_YYYY)).toString());</span>
+<span class="fc" id="L60">            } catch (ParseException e){</span>
+<span class="fc" id="L61">                LOGGER.error(&quot;Error in Parsing by Date: &quot;, e);</span>
+<span class="fc" id="L62">                throw new RuntimeException(&quot;Error in Parsing by Date&quot;);</span>
+<span class="fc" id="L63">            }</span>
+        } else{
+<span class="fc bfc" id="L65" title="All 2 branches covered.">            if(criteriaList.contains(SearchConstants.AMOUNT)){</span>
+<span class="fc" id="L66">                statementList = this.filterList.filterByAmount(statementList, requestVO.getFromAmount(), requestVO.getToAmount());</span>
+            }
+<span class="fc bfc" id="L68" title="All 2 branches covered.">            if(criteriaList.contains((SearchConstants.DATE))){</span>
+                try {
+<span class="fc" id="L70">                    statementList = this.filterList.filterByDate(statementList, requestVO.getFromDate(), requestVO.getToDate());</span>
+<span class="fc" id="L71">                } catch (ParseException e){</span>
+<span class="fc" id="L72">                    LOGGER.error(&quot;Error in Parsing by Date: &quot;, e);</span>
+<span class="fc" id="L73">                    throw new RuntimeException(&quot;Error in Parsing by Date&quot;);</span>
+<span class="fc" id="L74">                }</span>
+            }
+        }
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        if(statementList.isEmpty()){</span>
+<span class="fc" id="L78">            return Arrays.asList(&quot;Records not found&quot;);</span>
+        }
+<span class="fc" id="L80">        return statementList;</span>
+    }
+
+    /**
+     * Returns query to execute
+     * @param requestVO
+     * @return String
+     */
+    private String generateQuery(Request requestVO){
+<span class="fc" id="L89">        String query = &quot;SELECT * from statement WHERE account_id=&quot;+requestVO.getAccountId();</span>
+<span class="fc" id="L90">        return  query;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>
